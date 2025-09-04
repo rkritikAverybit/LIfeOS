@@ -1,0 +1,1001 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calendar Ops Agent — UI</title>
+  <style>
+    :root{
+      --bg:#0a0f1c; --panel:#0f1629; --ink:#f8faff; --muted:#8b9dc3; --accent:#4f7fff; --accent-2:#00c9ff;
+      --good:#10d876; --warn:#ffb020; --bad:#ff4757; --chip:#162030; --border:#1e2a42; --shadow:0 20px 60px rgba(0,0,0,.4);
+      --glow:0 0 20px rgba(79,127,255,.1); --text-shadow:0 1px 2px rgba(0,0,0,.3);
+      --gradient-bg:radial-gradient(1400px 900px at 15% -5%, rgba(79,127,255,.12) 0%, transparent 50%),
+                    radial-gradient(1100px 800px at 85% 10%, rgba(0,201,255,.08) 0%, transparent 50%);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;overflow-x:hidden}
+    body{
+      margin:0;
+      font:16px/1.6 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background:var(--gradient-bg), var(--bg);
+      color:var(--ink);
+      text-rendering:optimizeLegibility;
+      -webkit-font-smoothing:antialiased;
+    }
+    
+    /* Enhanced container with backdrop blur effect */
+    .container{
+      max-width:1200px;margin:0 auto;padding:24px;
+      backdrop-filter:blur(20px);
+      position:relative;
+    }
+    
+    /* Improved header with better spacing and glow effects */
+    .header{
+      display:flex;gap:20px;align-items:center;justify-content:space-between;margin-bottom:32px;
+      padding:20px 0;
+      border-bottom:1px solid rgba(30,42,66,.5);
+    }
+    .brand{display:flex;gap:16px;align-items:center}
+    .logo{
+      width:52px;height:52px;display:grid;place-items:center;border-radius:16px;
+      background:linear-gradient(135deg,var(--accent) 0%, var(--accent-2) 100%);
+      box-shadow:var(--shadow), var(--glow);
+      font-size:24px;
+      position:relative;
+      overflow:hidden;
+    }
+    .logo::before{
+      content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+      background:linear-gradient(45deg, transparent, rgba(255,255,255,.1), transparent);
+      animation:shimmer 3s infinite;
+    }
+    @keyframes shimmer{0%{transform:translateX(-100%);}100%{transform:translateX(100%);}}
+    
+    .title{font-size:24px;font-weight:800;letter-spacing:-.5px;text-shadow:var(--text-shadow)}
+    .subtitle{font-size:14px;color:var(--muted);font-weight:500;margin-top:2px}
+
+    /* Enhanced panels with glass morphism */
+    .panel{
+      background:linear-gradient(145deg, rgba(255,255,255,.08) 0%, rgba(255,255,255,.02) 100%);
+      border:1px solid rgba(30,42,66,.8);
+      border-radius:20px;
+      box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,.05);
+      backdrop-filter:blur(20px);
+      position:relative;
+      overflow:hidden;
+      transition:all 0.3s ease;
+    }
+    .panel::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:1px;
+      background:linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent);
+    }
+    .panel:hover{
+      border-color:rgba(79,127,255,.3);
+      box-shadow:var(--shadow), var(--glow), inset 0 1px 0 rgba(255,255,255,.05);
+    }
+
+    /* Improved grid layout */
+    .grid{display:grid;grid-template-columns: 380px 380px 1fr;gap:24px;align-items:start}
+    @media (max-width:1100px){.grid{grid-template-columns: 1fr 1fr;}}
+    @media (max-width:800px){.grid{grid-template-columns: 1fr;}}
+
+    /* Enhanced form elements */
+    .row{display:flex;gap:12px;align-items:center;margin-bottom:16px}
+    input[type="text"],input[type="url"],input[type="number"],select,textarea{
+      flex:1;padding:14px 16px;border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(15,23,49,.8);
+      color:var(--ink);outline:none;
+      font-size:14px;font-weight:500;
+      transition:all 0.3s ease;
+      backdrop-filter:blur(10px);
+    }
+    input:focus,select:focus,textarea:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 0 3px rgba(79,127,255,.1);
+      background:rgba(15,23,49,.95);
+    }
+    input::placeholder{color:#6a7ba8;font-weight:400}
+
+    /* Enhanced buttons with better hover effects */
+    .btn{
+      border:none;
+      background:linear-gradient(135deg,var(--accent) 0%, var(--accent-2) 100%);
+      color:#0a1128;padding:12px 20px;border-radius:12px;
+      font-weight:700;cursor:pointer;
+      box-shadow:var(--shadow), 0 0 0 0 rgba(79,127,255,.4);
+      transition:all 0.3s ease;
+      font-size:14px;
+      position:relative;
+      overflow:hidden;
+    }
+    .btn:hover{
+      transform:translateY(-2px);
+      box-shadow:var(--shadow), 0 8px 25px rgba(79,127,255,.25);
+    }
+    .btn:active{transform:translateY(0)}
+    
+    .btn.ghost{
+      background:rgba(79,127,255,.1);
+      color:var(--ink);
+      border:1px solid rgba(79,127,255,.3);
+    }
+    .btn.ghost:hover{
+      background:rgba(79,127,255,.2);
+      border-color:var(--accent);
+    }
+    .btn.small{padding:8px 14px;border-radius:10px;font-size:13px}
+
+    /* Enhanced indicators with pulse animation */
+    .indicator{
+      display:inline-flex;align-items:center;gap:8px;font-size:12px;
+      padding:8px 14px;border-radius:20px;
+      border:1px solid var(--border);
+      background:rgba(15,23,49,.9);
+      font-weight:600;
+      backdrop-filter:blur(10px);
+      position:relative;
+    }
+    .indicator::before{
+      content:'';width:8px;height:8px;border-radius:50%;
+      background:currentColor;
+      animation:pulse 2s infinite;
+    }
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+    
+    .indicator.i-ok{border-color:var(--good);color:var(--good)}
+    .indicator.i-warn{border-color:var(--warn);color:var(--warn)}
+    .indicator.i-bad{border-color:var(--bad);color:var(--bad)}
+    .indicator.i-neutral{border-color:var(--accent);color:var(--accent)}
+
+    /* Enhanced clock with better styling */
+    .clock{
+      font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;
+      font-weight:600;letter-spacing:0.5px;
+      padding:6px 12px;
+      background:rgba(15,23,49,.5);
+      border-radius:8px;
+      backdrop-filter:blur(10px);
+    }
+
+    /* Improved file upload section */
+    .upload-section{
+      border:2px dashed rgba(79,127,255,.3);
+      border-radius:16px;padding:24px;margin:20px 0;
+      text-align:center;
+      transition:all 0.4s ease;
+      background:rgba(79,127,255,.02);
+      position:relative;
+    }
+    .upload-section:hover{
+      border-color:var(--accent);
+      background:rgba(79,127,255,.08);
+      transform:translateY(-2px);
+    }
+    .upload-section.dragover{
+      border-color:var(--accent-2);
+      background:rgba(0,201,255,.1);
+      box-shadow:0 0 30px rgba(0,201,255,.2);
+    }
+
+    .file-input{display:none}
+    .file-label{
+      display:inline-flex;align-items:center;gap:10px;
+      padding:14px 20px;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      color:#0a1128;border-radius:12px;font-weight:700;
+      cursor:pointer;box-shadow:var(--shadow);
+      transition:all 0.3s ease;
+    }
+    .file-label:hover{transform:translateY(-2px)}
+    
+    .file-info{margin-top:14px;font-size:14px;color:var(--muted);font-weight:500}
+    .upload-progress{
+      margin-top:12px;height:6px;
+      background:rgba(30,42,66,.5);
+      border-radius:3px;overflow:hidden;
+    }
+    .progress-bar{
+      height:100%;
+      background:linear-gradient(90deg,var(--accent),var(--accent-2));
+      width:0%;transition:width 0.4s ease;
+      border-radius:3px;
+    }
+
+    /* Enhanced chat interface */
+    .chat{display:flex;flex-direction:column;height:75vh}
+    .feed{flex:1;overflow:auto;padding:20px;scrollbar-width:thin}
+    .feed::-webkit-scrollbar{width:6px}
+    .feed::-webkit-scrollbar-track{background:rgba(30,42,66,.3)}
+    .feed::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px}
+
+    /* Enhanced chat bubbles */
+    .bubble{
+      max-width:85%;padding:16px 20px;border-radius:18px;
+      margin:12px 0;white-space:pre-wrap;
+      position:relative;font-weight:500;
+      box-shadow:0 4px 15px rgba(0,0,0,.15);
+    }
+    .me{
+      background:linear-gradient(135deg, rgba(79,127,255,.15), rgba(79,127,255,.25));
+      border:1px solid rgba(79,127,255,.3);
+      align-self:flex-end;
+      color:var(--ink);
+    }
+    .bot{
+      background:linear-gradient(135deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border:1px solid rgba(30,42,66,.8);
+      align-self:flex-start;
+      backdrop-filter:blur(10px);
+    }
+
+    /* Enhanced meta information */
+    .meta{
+      display:flex;gap:12px;align-items:center;
+      font-size:12px;color:var(--muted);margin-top:8px;
+      font-weight:600;
+    }
+    .status{font-weight:700;padding:4px 8px;border-radius:6px}
+    .status.good{color:var(--good);background:rgba(16,216,118,.1)} 
+    .status.bad{color:var(--bad);background:rgba(255,71,87,.1)} 
+    .status.warn{color:var(--warn);background:rgba(255,176,32,.1)}
+
+    /* Enhanced cards */
+    .card{
+      border:1px solid rgba(30,42,66,.6);
+      background:linear-gradient(145deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      border-radius:16px;padding:16px;margin-top:12px;
+      backdrop-filter:blur(10px);
+    }
+    .card h4{margin:0 0 12px 0;color:var(--ink);font-weight:700}
+    .kv{grid-template-columns:140px 1fr;gap:8px;font-size:13px}
+    .kv div:nth-child(odd){color:var(--muted);font-weight:600}
+    .kv div:nth-child(even){font-weight:500}
+
+    .events{display:grid;gap:12px;margin-top:10px}
+    .event-card{
+      border:1px solid rgba(30,42,66,.6);
+      background:linear-gradient(135deg, rgba(79,127,255,.05), rgba(0,201,255,.03));
+      border-radius:14px;padding:14px;
+      transition:all 0.3s ease;
+    }
+    .event-card:hover{
+      border-color:rgba(79,127,255,.4);
+      transform:translateY(-1px);
+    }
+    .event-title{font-weight:700;margin-bottom:8px;color:var(--ink)}
+
+    /* Enhanced composer */
+    .composer{
+      display:flex;gap:12px;
+      border-top:1px solid rgba(30,42,66,.5);
+      padding:20px;
+      background:rgba(15,23,49,.3);
+      backdrop-filter:blur(20px);
+    }
+    textarea{
+      flex:1;resize:none;min-height:56px;max-height:200px;
+      padding:16px;border-radius:16px;
+      border:1px solid var(--border);
+      background:rgba(15,23,49,.8);
+      color:var(--ink);
+      font-weight:500;
+    }
+
+    /* Enhanced quick chips */
+    .quick{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+    .chip{
+      background:linear-gradient(135deg, rgba(79,127,255,.08), rgba(0,201,255,.05));
+      border:1px solid rgba(79,127,255,.2);
+      padding:10px 16px;border-radius:20px;
+      font-size:12px;cursor:pointer;
+      font-weight:600;color:var(--ink);
+      transition:all 0.3s ease;
+      backdrop-filter:blur(10px);
+    }
+    .chip:hover{
+      border-color:var(--accent);
+      background:linear-gradient(135deg, rgba(79,127,255,.15), rgba(0,201,255,.1));
+      transform:translateY(-2px);
+    }
+
+    /* Enhanced slots */
+    .slots{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:12px}
+    .slot{
+      border:1px solid rgba(30,42,66,.6);
+      background:linear-gradient(135deg, rgba(16,216,118,.08), rgba(16,216,118,.03));
+      border-radius:14px;padding:12px;
+    }
+    .slot .readable{font-weight:600;color:var(--ink)}
+
+    /* Enhanced animations */
+    .fade-in{animation:fadeInUp .4s cubic-bezier(0.4, 0, 0.2, 1) both}
+    @keyframes fadeInUp{
+      from{opacity:0;transform:translateY(20px) scale(0.95)}
+      to{opacity:1;transform:translateY(0) scale(1)}
+    }
+
+    .section-divider{
+      border-top:1px solid rgba(30,42,66,.4);
+      margin:24px 0;padding-top:24px;
+    }
+
+    /* Enhanced wellness container */
+    .wellness-container { 
+      padding:24px; 
+      background:linear-gradient(145deg, rgba(255,255,255,.08) 0%, rgba(255,255,255,.02) 100%);
+      border:1px solid rgba(30,42,66,.8); 
+      border-radius:20px; 
+      box-shadow:var(--shadow); 
+      color:var(--ink);
+      backdrop-filter:blur(20px);
+    }
+    .wellness-container h1 { 
+      font-size:22px; margin-bottom:20px; color:var(--ink); 
+      font-weight:800; text-shadow:var(--text-shadow);
+    }
+    .wellness-container label { 
+      display:block; margin:12px 0 8px; font-weight:600; 
+      color:var(--muted); font-size:14px;
+    }
+    .wellness-container input,
+    .wellness-container textarea,
+    .wellness-container select { 
+      width:100%; padding:14px 16px; 
+      border:1px solid var(--border); 
+      border-radius:12px;
+      background:rgba(15,23,49,.8); 
+      color:var(--ink); 
+      font-size:14px;
+      font-weight:500;
+      transition:all 0.3s ease;
+    }
+    .wellness-container input:focus,
+    .wellness-container textarea:focus,
+    .wellness-container select:focus {
+      border-color:var(--accent);
+      box-shadow:0 0 0 3px rgba(79,127,255,.1);
+    }
+    .wellness-container textarea { resize: vertical; min-height:70px; }
+    .wellness-container button[type="submit"] { 
+      margin-top:20px; padding:14px 20px; width:100%; 
+      border:none;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      color:#0a1128; font-size:16px; font-weight:700; 
+      border-radius:12px;
+      cursor:pointer; box-shadow:var(--shadow);
+      transition:all 0.3s ease;
+    }
+    .wellness-container button[type="submit"]:hover { 
+      transform:translateY(-2px);
+      box-shadow:var(--shadow), 0 8px 25px rgba(79,127,255,.25);
+    }
+    .wellness-container .msg { margin-top:16px; font-size:14px; font-weight:600; }
+    .wellness-container .msg.success { color:var(--good); }
+    .wellness-container .msg.error { color:var(--bad); }
+
+    /* Panel specific styling */
+    .config {padding: 24px;}
+    .config h3 {
+      color: var(--ink);
+      font-weight: 700;
+      margin: 0 0 16px 0;
+      font-size: 16px;
+      text-shadow: var(--text-shadow);
+    }
+    .config .subtitle {
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+    .config code {
+      background: rgba(79,127,255,.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      border: 1px solid rgba(79,127,255,.2);
+    }
+
+    /* Responsive improvements */
+    @media (max-width: 1200px) {
+      .container { padding: 20px; max-width: 100%; }
+      .grid { gap: 20px; }
+    }
+    
+    @media (max-width: 900px) {
+      .header { flex-direction: column; gap: 16px; text-align: center; }
+      .brand { flex-direction: column; gap: 12px; }
+      .panel { margin-bottom: 20px; }
+      .chat { height: 60vh; min-height: 400px; }
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    @media (max-width: 600px) {
+      .container { padding: 16px; }
+      .chat { height: 50vh; min-height: 350px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="brand">
+        <div class="logo">📅</div>
+        <div>
+          <div class="title">Calendar Ops Agent</div>
+          <div class="subtitle">Talk to your n8n calendar assistant (IST)</div>
+        </div>
+      </div>
+      <div style="text-align:right;display:flex;flex-direction:column;gap:12px;align-items:flex-end">
+        <div id="indicator" class="indicator i-neutral">Webhook: Not set</div>
+        <div id="financeIndicator" class="indicator i-neutral">Finance: Not set</div>
+        <div class="clock" id="clock">—</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT: config & quick actions -->
+      <div class="panel config">
+        <h3>Calendar Webhook</h3>
+        <div class="row">
+          <input value="https://rkritiksharma13.app.n8n.cloud/webhook/calendar-agent-webhook" id="webhook" type="url" placeholder="https://your-n8n-host/webhook/calendar-agent-webhook" />
+          <button class="btn small" id="saveUrl">Save</button>
+        </div>
+        <div class="subtitle">Sends <code>POST</code> JSON: <code>{ chatInput: "..." }</code> to your n8n Webhook node.</div>
+
+        <div class="section-divider">
+          <h3>📂 Finance CSV Upload</h3>
+          <div class="row">
+            <input value = 'https://rkritiksharma13.app.n8n.cloud/webhook/finance-csv-upload' id="financeWebhook" type="url" placeholder="https://your-n8n-host/webhook/finance-csv-upload" />
+            <button class="btn small" id="saveFinanceUrl">Save</button>
+          </div>
+          
+          <div class="upload-section" id="uploadSection">
+            <div style="font-size: 32px; margin-bottom: 8px;">📊</div>
+            <label for="csvFile" class="file-label">
+              <span>📁</span>
+              Choose CSV File
+            </label>
+            <input type="file" id="csvFile" class="file-input" accept=".csv" />
+            <div class="file-info" id="fileInfo">No file selected</div>
+            <div class="upload-progress" id="uploadProgress" style="display:none;">
+              <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <button class="btn small" id="uploadBtn" style="margin-top:12px;display:none;">Upload File</button>
+          </div>
+        </div>
+
+        <h3>Quick prompts</h3>
+        <div class="quick" id="quick">
+          <div class="chip" data-t="get all Tomorrow's events">Show all Tomorrow's events</div>
+          <div class="chip" data-t="What meetings do I have today?">What meetings today?</div>
+          <div class="chip" data-t="Find free time after 3pm today for 30 minutes">Free after 3pm (30m)</div>
+          <div class="chip" data-t="Reschedule my 1pm meeting to 4pm today">Reschedule 1pm → 4pm</div>
+          <div class="chip" data-t="Cancel my 5pm meeting today">Cancel 5pm</div>
+        </div>
+      </div>
+
+      
+<div class="panel wellness-container">
+  <h1>🌱 Daily Wellness Check-in</h1>
+  <form id="checkinForm">
+      <label for="user_id">User ID</label>
+      <input type="text" id="user_id" name="user_id" value="1" required />
+
+      <label for="mood">Mood (1–5)</label>
+      <select id="mood" name="mood" required>
+        <option value="">Select mood</option>
+        <option value="1">1 😞</option>
+        <option value="2">2 🙁</option>
+        <option value="3">3 😐</option>
+        <option value="4">4 🙂</option>
+        <option value="5">5 😄</option>
+      </select>
+
+      <label for="sleep">Sleep (hours)</label>
+      <input type="number" step="0.1" id="sleep" name="sleep" placeholder="e.g., 7.5" required />
+
+      <label for="steps">Steps</label>
+      <input type="number" id="steps" name="steps" placeholder="e.g., 8000" required />
+
+      <label for="note">Note</label>
+      <textarea id="note" name="note" rows="3" placeholder="How was your day?"></textarea>
+
+      <button type="submit">Submit Check-in</button>
+      <div id="msg" class="msg"></div>
+    </form>
+</div>
+
+      <!-- RIGHT: chat -->
+      <div class="panel chat">
+        <div id="feed" class="feed"></div>
+        <div class="composer">
+          <textarea id="input" placeholder="e.g., Book 30m with Aanya next Tuesday at 11am"></textarea>
+          <button class="btn" id="send">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== Helpers
+    const $ = (s, el=document) => el.querySelector(s);
+    const $$ = (s, el=document) => Array.from(el.querySelectorAll(s));
+
+    // Persist webhook URLs
+    const webhookInput = $('#webhook');
+    const financeWebhookInput = $('#financeWebhook');
+    const savedCalendar = localStorage.getItem('webhookURL');
+    const savedFinance = localStorage.getItem('financeWebhookURL');
+    
+    if(savedCalendar) webhookInput.value = savedCalendar;
+    if(savedFinance) financeWebhookInput.value = savedFinance;
+
+    $('#saveUrl').onclick = () => {
+      localStorage.setItem('webhookURL', webhookInput.value.trim());
+      toast('Calendar webhook URL saved');
+      setIndicator(webhookInput.value.trim() ? 'neutral' : 'warn');
+    };
+
+    $('#saveFinanceUrl').onclick = () => {
+      localStorage.setItem('financeWebhookURL', financeWebhookInput.value.trim());
+      toast('Finance webhook URL saved');
+      setFinanceIndicator(financeWebhookInput.value.trim() ? 'neutral' : 'warn');
+    };
+
+    function toast(msg){
+      const t=document.createElement('div');
+      t.textContent = msg;
+      Object.assign(t.style,{position:'fixed',bottom:'24px',left:'50%',transform:'translateX(-50%)',background:'linear-gradient(135deg, rgba(79,127,255,.9), rgba(0,201,255,.8))',border:'1px solid rgba(79,127,255,.3)',padding:'12px 20px',borderRadius:'12px',color:'#0a1128',boxShadow:'var(--shadow)',zIndex:1000,fontWeight:'600',backdropFilter:'blur(20px)'});
+      document.body.appendChild(t); setTimeout(()=>t.remove(),2000);
+    }
+
+    // IST clock
+    function tick(){
+      const now = new Date();
+      const fmt = new Intl.DateTimeFormat('en-IN',{dateStyle:'medium', timeStyle:'medium', timeZone:'Asia/Kolkata'});
+      $('#clock').textContent = 'IST ' + fmt.format(now) + ' (UTC+05:30)';
+    }
+    tick(); setInterval(tick,1000);
+
+    // Indicator helpers
+    function setIndicator(state){
+      const el = $('#indicator');
+      el.classList.remove('i-ok','i-warn','i-bad','i-neutral');
+      if(state==='ok'){ el.classList.add('i-ok'); el.textContent = 'Calendar: Connected'; }
+      else if(state==='bad'){ el.classList.add('i-bad'); el.textContent = 'Calendar: Error'; }
+      else if(state==='warn'){ el.classList.add('i-warn'); el.textContent = 'Calendar: Not set'; }
+      else { el.classList.add('i-neutral'); el.textContent = 'Calendar: Ready'; }
+    }
+
+    function setFinanceIndicator(state){
+      const el = $('#financeIndicator');
+      el.classList.remove('i-ok','i-warn','i-bad','i-neutral');
+      if(state==='ok'){ el.classList.add('i-ok'); el.textContent = 'Finance: Connected'; }
+      else if(state==='bad'){ el.classList.add('i-bad'); el.textContent = 'Finance: Error'; }
+      else if(state==='warn'){ el.classList.add('i-warn'); el.textContent = 'Finance: Not set'; }
+      else { el.classList.add('i-neutral'); el.textContent = 'Finance: Ready'; }
+    }
+
+    setIndicator(savedCalendar ? 'neutral' : 'warn');
+    setFinanceIndicator(savedFinance ? 'neutral' : 'warn');
+
+    // File upload functionality
+    const csvFile = $('#csvFile');
+    const fileInfo = $('#fileInfo');
+    const uploadBtn = $('#uploadBtn');
+    const uploadSection = $('#uploadSection');
+    const uploadProgress = $('#uploadProgress');
+    const progressBar = $('#progressBar');
+
+    // File selection
+    csvFile.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+          fileInfo.textContent = `Selected: ${file.name} (${(file.size/1024).toFixed(1)}KB)`;
+          uploadBtn.style.display = 'inline-block';
+        } else {
+          fileInfo.textContent = 'Please select a CSV file';
+          uploadBtn.style.display = 'none';
+        }
+      } else {
+        fileInfo.textContent = 'No file selected';
+        uploadBtn.style.display = 'none';
+      }
+    });
+
+    // Drag and drop
+    uploadSection.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadSection.classList.add('dragover');
+    });
+
+    uploadSection.addEventListener('dragleave', () => {
+      uploadSection.classList.remove('dragover');
+    });
+
+    uploadSection.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadSection.classList.remove('dragover');
+      
+      const files = e.dataTransfer.files;
+      if (files.length > 0 && (files[0].type === 'text/csv' || files[0].name.endsWith('.csv'))) {
+        csvFile.files = files;
+        const event = new Event('change');
+        csvFile.dispatchEvent(event);
+      } else {
+        toast('Please drop a CSV file');
+      }
+    });
+
+    // Test webhook connectivity
+    async function testWebhook(url) {
+      try {
+        const response = await fetch(url, {
+          method: 'OPTIONS',
+          mode: 'cors',
+          headers: {
+            'Access-Control-Request-Method': 'POST',
+            'Access-Control-Request-Headers': 'Content-Type'
+          }
+        });
+        return { success: true, status: response.status };
+      } catch (error) {
+        return { success: false, error: error.message };
+      }
+    }
+
+    // Add test button functionality
+    function addTestButton() {
+      const testBtn = document.createElement('button');
+      testBtn.className = 'btn small ghost';
+      testBtn.textContent = 'Test';
+      testBtn.style.marginLeft = '4px';
+      testBtn.onclick = async () => {
+        const url = financeWebhookInput.value.trim();
+        if (!url) {
+          toast('Please enter webhook URL first');
+          return;
+        }
+        
+        testBtn.textContent = 'Testing...';
+        testBtn.disabled = true;
+        
+        const result = await testWebhook(url);
+        
+        if (result.success) {
+          toast('✅ Webhook is accessible');
+          setFinanceIndicator('neutral');
+        } else {
+          toast('❌ Webhook test failed: ' + result.error);
+          setFinanceIndicator('bad');
+          
+          // Add detailed error info to chat
+          addBubble(`Testing webhook: ${url}`, 'me');
+          addBubble(`❌ Connection test failed: ${result.error}\n\nPossible issues:\n• CORS not enabled on n8n webhook\n• Webhook URL incorrect\n• n8n instance not accessible\n• Network connectivity issue`, 'bot');
+        }
+        
+        testBtn.textContent = 'Test';
+        testBtn.disabled = false;
+      };
+      
+      $('#saveFinanceUrl').parentNode.appendChild(testBtn);
+    }
+    addTestButton();
+
+    // File upload
+    uploadBtn.addEventListener('click', async function() {
+      const file = csvFile.files[0];
+      const financeUrl = financeWebhookInput.value.trim();
+      
+      if (!file) {
+        toast('Please select a file first');
+        return;
+      }
+      
+      if (!financeUrl) {
+        toast('Please set the finance webhook URL first');
+        setFinanceIndicator('warn');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('csv', file);
+
+      // Show progress
+      uploadProgress.style.display = 'block';
+      progressBar.style.width = '0%';
+      uploadBtn.textContent = 'Uploading...';
+      uploadBtn.disabled = true;
+
+      // Add detailed logging
+      console.log('Upload attempt:', {
+        file: file.name,
+        size: file.size,
+        type: file.type,
+        url: financeUrl
+      });
+
+      try {
+        // Try different fetch configurations for better compatibility
+        const fetchOptions = [
+          // Standard CORS request
+          {
+            method: 'POST',
+            mode: 'cors',
+            body: formData
+          },
+          // No-CORS mode (limited response access)
+          {
+            method: 'POST',
+            mode: 'no-cors',
+            body: formData
+          }
+        ];
+
+        let response = null;
+        let lastError = null;
+
+        // Try each configuration
+        for (let i = 0; i < fetchOptions.length; i++) {
+          try {
+            console.log(`Trying fetch configuration ${i + 1}:`, fetchOptions[i]);
+            response = await fetch(financeUrl, fetchOptions[i]);
+            
+            // If we get here, the request succeeded
+            progressBar.style.width = '90%';
+            break;
+          } catch (error) {
+            console.log(`Configuration ${i + 1} failed:`, error.message);
+            lastError = error;
+            
+            if (i === fetchOptions.length - 1) {
+              // Last attempt failed, throw the error
+              throw error;
+            }
+          }
+        }
+
+        progressBar.style.width = '100%';
+
+        // Handle different response scenarios
+        if (response.type === 'opaque') {
+          // No-CORS response - we can't read the response but upload likely succeeded
+          toast('CSV uploaded (no-cors mode)');
+          setFinanceIndicator('ok');
+          
+          addBubble(`📊 Uploaded: ${file.name}`, 'me');
+          addBubble(`✅ Finance CSV uploaded (no-cors mode - response not readable)`, 'bot');
+        } else if (response.ok) {
+          // Standard successful response
+          const result = await response.text().catch(() => 'Upload successful');
+          toast('CSV uploaded successfully!');
+          setFinanceIndicator('ok');
+          
+          addBubble(`📊 Uploaded: ${file.name}`, 'me');
+          addBubble(`✅ Finance CSV processed successfully`, 'bot');
+        } else {
+          // Response received but not successful
+          const errorText = await response.text().catch(() => `HTTP ${response.status}`);
+          throw new Error(`Upload failed: ${response.status} - ${errorText}`);
+        }
+        
+        // Reset form on success
+        csvFile.value = '';
+        fileInfo.textContent = 'No file selected';
+        uploadBtn.style.display = 'none';
+
+      } catch (error) {
+        console.error('Upload error:', error);
+        
+        let errorMessage = error.message;
+        let troubleshooting = '';
+        
+        if (error.message.includes('Failed to fetch')) {
+          errorMessage = 'Connection failed';
+          troubleshooting = `\n\nTroubleshooting steps:\n1. Check if webhook URL is correct\n2. Ensure n8n instance is running\n3. Verify CORS settings in n8n\n4. Try testing webhook first\n\nURL: ${financeUrl}`;
+        }
+        
+        toast('Upload failed: ' + errorMessage);
+        setFinanceIndicator('bad');
+        addBubble(`📊 Upload failed: ${file.name}`, 'me');
+        addBubble(`❌ Error: ${errorMessage}${troubleshooting}`, 'bot');
+      } finally {
+        uploadBtn.textContent = 'Upload File';
+        uploadBtn.disabled = false;
+        setTimeout(() => {
+          uploadProgress.style.display = 'none';
+          progressBar.style.width = '0%';
+        }, 1000);
+      }
+    });
+
+    // Chat feed
+    const feed = $('#feed');
+    function addBubble(text, who='me', html=false){
+      const b = document.createElement('div');
+      b.className = `bubble ${who} fade-in`;
+      if(html){ b.innerHTML = text; } else { b.textContent = text; }
+      feed.appendChild(b); feed.scrollTop = feed.scrollHeight;
+      return b;
+    }
+
+    function addResponseCard(payload){
+      // Some n8n setups wrap JSON in { output: "..." }
+      let data = payload;
+      if (typeof payload?.output === 'string') {
+        try { data = JSON.parse(payload.output); } catch(e) { /* ignore */ }
+      }
+
+      // const wrap = document.createElement('div');
+      // wrap.className = 'bubble bot fade-in';
+
+      const status = data.status || 'unknown';
+      const op = data.operation || data.operationType || '—';
+      const message = data.message || '';
+      const statusClass = status==='success'||status==='no_conflict' ? 'good' : (status==='conflict' ? 'warn' : (status==='error'?'bad':''));
+
+      // Header/meta
+      let html = '';
+      // if(message) html ;
+
+      // Event cards
+      const events = Array.isArray(data.event) ? data.event : (data.event ? [data.event] : []);
+      if (events.length){
+        html += `<div class="card"><h4>Events (${events.length})</h4><div class="events">`;
+        for(const ev of events){
+          const start = ev.start || ev.startTime || '';
+          const end = ev.end || ev.endTime || '';
+          const sum = ev.summary || 'Event';
+          const desc = ev.description || '';
+          const id = ev.id || '';
+          const loc = ev.location || '';
+          const attendees = ev.attendees || '';
+          const link = ev.hangoutLink || ''; 
+          html += `<div class="event-card">
+            <div class="event-title">${escapeHtml(sum)}</div>
+            <div class="kv">
+              <div>Start</div><div>${escapeHtml(start)}</div>
+              <div>End</div><div>${escapeHtml(end)}</div>
+              ${loc?`<div>Location</div><div>${escapeHtml(loc)}</div>`:''}
+              ${attendees?`<div>Attendees</div><div>${escapeHtml(attendees)}</div>`:''}
+              ${link?`<div>Link</div><div>${escapeHtml(link)}</div>`:''}
+              ${desc?`<div>Description</div><div>${escapeHtml(desc)}</div>`:''}
+              
+            </div>
+          </div>`;
+        }
+        html += `</div></div>`;
+      }
+
+      // Suggested slots (if any)
+      const slots = Array.isArray(data.availableSlots) ? data.availableSlots : [];
+      if(slots.length){
+        html += `<div class="card"><h4>Suggested Free Slots</h4><div class="slots">`;
+        for(const s of slots){
+          const r = escapeHtml(s.readable || `${s.Start} → ${s.End}`);
+          html += `<div class="slot"><div class="readable">${r}</div><div style="opacity:.8;font-size:12px">${s.Start} → ${s.End}</div></div>`;
+          html += `<div style="display:flex;align-items:center"><button class="btn small ghost use-slot" data-start="${s.Start}" data-end="${s.End}">Use slot</button></div>`;
+        }
+        html += `</div></div>`;
+      }
+
+   if (html.trim()) {
+  const wrap = document.createElement('div');
+  wrap.className = 'bubble bot fade-in';
+  wrap.innerHTML = html;
+  feed.appendChild(wrap);
+  feed.scrollTop = feed.scrollHeight;
+
+  // attach slot actions
+  $('.use-slot', wrap).forEach(btn => {
+    btn.addEventListener('click', () => {
+      const start = btn.getAttribute('data-start');
+      const end = btn.getAttribute('data-end');
+      const draft = `Book a meeting at ${start} to ${end}`;
+      $('#input').value = draft;
+      $('#input').focus();
+      toast('Drafted follow‑up from slot');
+    });
+  });
+}
+
+
+      // attach slot actions
+      $('.use-slot', wrap).forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          const start = btn.getAttribute('data-start');
+          const end = btn.getAttribute('data-end');
+          const draft = `Book a meeting at ${start} to ${end}`;
+          $('#input').value = draft;
+          $('#input').focus();
+          toast('Drafted follow‑up from slot');
+        });
+      });
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>\"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));
+    }
+
+    async function sendMessage(text){
+      const url = webhookInput.value.trim();
+      if(!url){ toast('Please set the calendar webhook URL first'); setIndicator('warn'); return; }
+
+      addBubble(text, 'me');
+      const hold = addBubble('Thinking…', 'bot');
+
+      try{
+        const res = await fetch(url,{
+          method:'POST',
+          mode:'cors',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ chatInput: text })
+        });
+        const payload = await res.json().catch(()=>({status:'error', message:'Non‑JSON response from webhook'}));
+        hold.remove();
+        addResponseCard(payload);
+        setIndicator('ok');
+      }catch(err){
+        hold.remove();
+        addResponseCard({status:'error', message: err.message || String(err)});
+        setIndicator('bad');
+      }
+    }
+
+    // Composer
+    const input = $('#input');
+    $('#send').onclick = ()=>{
+      const t = input.value.trim(); if(!t) return; input.value=''; sendMessage(t);
+    };
+    input.addEventListener('keydown', e=>{
+      if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); $('#send').click(); }
+    });
+
+    // Quick chips
+    $('#quick').addEventListener('click', e=>{
+      const el = e.target.closest('.chip'); if(!el) return;
+      input.value = el.getAttribute('data-t'); input.focus();
+    });
+  
+// Wellness check-in form submission
+const wellnessForm = document.getElementById('checkinForm');
+const wellnessMsg = document.getElementById('msg');
+
+if (wellnessForm) {
+  wellnessForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    wellnessMsg.textContent = "Submitting...";
+    wellnessMsg.className = "msg";
+
+    const data = {
+      user_id: wellnessForm.user_id.value,
+      mood: wellnessForm.mood.value,
+      sleep: wellnessForm.sleep.value,
+      steps: wellnessForm.steps.value,
+      note: wellnessForm.note.value
+    };
+
+    try {
+      const res = await fetch("https://rkritiksharma13.app.n8n.cloud/webhook/wellness-checkin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      if (!res.ok) throw new Error("Server error " + res.status);
+      const out = await res.json();
+      wellnessMsg.textContent = out.message || "✅ Check-in submitted successfully!";
+      wellnessMsg.className = "msg success";
+      wellnessForm.reset();
+    } catch (err) {
+      wellnessMsg.textContent = "❌ " + err.message;
+      wellnessMsg.className = "msg error";
+    }
+  });
+}
+</script>
+</body>
+</html>
